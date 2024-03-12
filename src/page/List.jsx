@@ -1,39 +1,39 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import styled from "styled-components";
-import Person from "../components/Person";
+
 import cancel from "../images/cancel.svg";
 import trash from "../images/trash.svg";
 import save from "../images/save.svg";
 import pen from "../images/pen.svg";
+import { useDispatch, useSelector } from "react-redux";
+import { editUser, removeUser } from "../redux/slices/userSlice";
 
 const Table = styled.table`
   width: 100%;
+  margin-top: 10px;
+
   border-collapse: collapse;
+`;
+const Container = styled.div`
+  background-color: #4abdac;
 `;
 
 const Th = styled.th`
-  background-color: #f0f0f0;
+  background-color: #4abdac;
   padding: 10px;
+  color: white;
   border: 1px solid #ddd;
 `;
 
 const TD = styled.td`
   padding: 10px;
   border: 1px solid #ddd;
+  color: white;
 `;
 
-const Tr = styled.tr`
-  &:nth-child(even) {
-    background-color: #f2f2f2;
-  }
-`;
-const Input = styled.input`
-  border: none;
-  width: 100%;
-`;
 const Button = styled.button`
   border: none;
-  background: transparent;
+  background-color: #4abdac;
   cursor: pointer;
   margin-left: 10px;
   border: 1px solid grey;
@@ -43,67 +43,63 @@ const Image = styled.img`
   width: 20px;
   height: 20px;
 `;
+
+const Input = styled.input`
+  border: none;
+  outline: none;
+`;
+
 export default function List() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [rowIDToEdit, setRowIDToEdit] = useState(undefined);
-  const [rowsState, setRowsState] = useState([]);
-  const [editedRow, setEditedRow] = useState();
+  const [savedUsers,setSavedUsers]=useState([])
 
-  useEffect(() => {
-    let list = sessionStorage.getItem("list");
-    if (!list) {
-      list = [];
-    } else {
-      list = JSON.parse(list);
-    }
-    setRowsState(list);
-  }, []);
+  const dispatch = useDispatch();
+  const users = useSelector((state) => state.users.list);
+
+  const [editedRow, setEditedRow] = useState();
 
   const handleEdit = (rowID) => {
     setIsEditMode(true);
-    setEditedRow(undefined);
+
+    const rowToEdit = users.find((user) => user.id === rowID);
+    setEditedRow(rowToEdit);
     setRowIDToEdit(rowID);
   };
-  const handleRemoveRow = (rowID) => {
-    const newData = rowsState.filter((row) => {
-      return row.id !== rowID ? row : null;
-    });
-    setRowsState(newData);
-    sessionStorage.setItem("list", JSON.stringify(newData));
-  };
+
   const handleOnChangeField = (e, rowID) => {
-    console.log(rowID);
-    const { name: fieldName, value } = e.target;
+    const { name, value } = e.target;
 
     setEditedRow((prev) => ({
       ...prev,
-      id: rowID,
-      [fieldName]: value,
+      [name]: value,
     }));
   };
+
   const handleCancelEditing = () => {
     setIsEditMode(false);
     setEditedRow(undefined);
   };
+
+  const handleRemoveRow = (rowID) => {
+    const updatedUsers = users.filter((user) => user.id !== rowID);
+    dispatch(removeUser(rowID));
+    localStorage.setItem("users", JSON.stringify(updatedUsers));
+    
+  };
+
   const handleSaveRowChanges = () => {
+    const updatedUsers = users.map((user) =>
+      user.id === editedRow.id ? { ...user, ...editedRow } : user
+    );
+    dispatch(editUser(editedRow));
+    localStorage.setItem("users", JSON.stringify(updatedUsers));
     setIsEditMode(false);
-    const newData = rowsState.map((row) => {
-      if (row.id === editedRow.id) {
-        return {
-          ...row, // Keep the existing row fields
-          ...editedRow, // Override with edited fields
-        };
-      }
-      return row;
-    });
-    setRowsState(newData);
-    console.log(newData);
-    sessionStorage.setItem("list", JSON.stringify(newData));
-    setEditedRow(undefined);
+    setEditedRow({});
   };
 
   return (
-    <div>
+    <Container>
       <Table>
         <thead>
           <tr>
@@ -113,11 +109,11 @@ export default function List() {
           </tr>
         </thead>
         <tbody>
-          {rowsState.map((row) => (
+          {users.map((row) => (
             <tr key={row.id}>
               <TD>
                 {isEditMode && rowIDToEdit === row.id ? (
-                  <input
+                  <Input
                     type="text"
                     value={editedRow ? editedRow.name : row.name}
                     id={row.id}
@@ -130,7 +126,7 @@ export default function List() {
               </TD>
               <TD>
                 {isEditMode && rowIDToEdit === row.id ? (
-                  <input
+                  <Input
                     type="text"
                     value={editedRow ? editedRow.surname : row.surname}
                     id={row.id}
@@ -144,7 +140,7 @@ export default function List() {
 
               <TD>
                 {isEditMode && rowIDToEdit === row.id ? (
-                  <input
+                  <Input
                     type="number"
                     value={editedRow ? editedRow.phone : row.phone}
                     id={row.id}
@@ -182,6 +178,6 @@ export default function List() {
           ))}
         </tbody>
       </Table>
-    </div>
+    </Container>
   );
 }

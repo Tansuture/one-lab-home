@@ -1,34 +1,36 @@
-import './App.css';
-import { createBrowserRouter, RouterProvider, BrowserRouter, Route, Routes } from 'react-router-dom';
-import Home from './page/Home';
-import Add from './page/Add';
-import List from './page/List';
+import "./App.css";
+import {
+  createBrowserRouter,
+  RouterProvider,
+
+} from "react-router-dom";
+import Home from "./page/Home";
+import Add from "./page/Add";
+import List from "./page/List";
+import { Provider } from "react-redux";
+import { store } from "./redux/store";
 
 function App() {
-
   const router = createBrowserRouter([
     {
       path: "/",
-      element: <Home/>
+      element: <Home />,
     },
     {
       path: "/add",
-      element: <Add/>
+      element: <Add />,
     },
     {
       path: "/list",
-      element: <List/>
-    }
-  ])
+      element: <List />,
+    },
+  ]);
 
   return (
     <div className="App">
-      <RouterProvider router={router}/>
-      {/* <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<div>Root page</div>}/>
-        </Routes>
-      </BrowserRouter> */}
+      <Provider store={store}>
+        <RouterProvider router={router} />
+      </Provider>
     </div>
   );
 }
